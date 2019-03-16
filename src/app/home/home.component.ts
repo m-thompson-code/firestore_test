@@ -13,6 +13,8 @@ export class HomeComponent {
 
     db: firebase.firestore.Firestore;
 
+    test: any;
+
     constructor(private router: Router) {
         this.router = router;
     }
@@ -21,6 +23,63 @@ export class HomeComponent {
         console.log("home");
         console.log(firebase.firestore());
         this.db = firebase.firestore();
+
+        this.test = [];
+
+        for (var i = 0; i < 50; i++) {
+            var data = {
+                index: i,
+                map: {}
+            };
+
+            data.map["" + (i % 10)] = true;
+            data.map["" + i] = true;
+            if (i % 5) {
+                data.map['mod5'] = true;
+            }
+
+            this.test.push(data);
+        }
+    }
+
+    presetBatchTest() {
+        return this.batchTest(this.test);
+    }
+
+    // moo
+    // readBatchTest(queries: any[]) {
+    //     var batchTestCollection = this.db.collection("batch_test");
+
+    //     queries = queries || [];
+
+    //     for (var i = 0; i < queries.length; i++) {
+    //         batchTestCollection = batchTestCollection.where("map." + queries[i], "==", true);
+    //     }
+    //     // .where("state", "==", "CA");
+
+    //     return batchTestCollection.orderBy("index").get().then(snapshot => {
+    //         snapshot.forEach(childSnapshot => {
+    //             console.log(childSnapshot.data());
+    //         })
+    //     });
+    // }
+
+    batchTest(datas: any[]) {
+        // Get a new write batch
+        var batch = this.db.batch();
+
+        var batchCollection = this.db.collection("batch_test");
+
+        for (var i = 0; i < datas.length; i++) {
+            var batchRef = batchCollection.doc("batch " + i);
+            batch.set(batchRef, datas[i]);
+        }
+
+        return batch.commit().then(() => {
+            console.log("batch complete");
+        }).catch(error => {
+            console.error(error);
+        })
     }
 
     setPost() {
@@ -67,22 +126,39 @@ export class HomeComponent {
         }
     }
 
+    // Cannot contain a forward slash (/)
+    // Cannot solely consist of a single period (.) or double periods (..)
+    // Cannot match the regular expression __.*__
+    testID(id: string) {
+        var weirdID = id || `id.\\@)(*&^%$#@!<>?:;"'[]{}-_=+`;
+        var obj = {};
+        obj[weirdID] = weirdID;
+        var idTest = this.db.collection(weirdID).doc(weirdID).set(obj);
+    }
+
     tran() {
         try {
             var docRef = this.db.collection("posts").doc("Test");
             var attemptRef = this.db.collection("attempts").doc("Test");
             return this.db.runTransaction((transaction => {
                 return transaction.get(docRef).then(postSnapshot => {
+                    var post = postSnapshot.data();
+
+                    for (var i = 0; i < 100; i++) {
+
+                    }
                     // return transaction.get(attemptRef).then(attemptSnapshot => {
-                        var post = postSnapshot.data();
     
-                        post.likeCount += 1;
+                        for (var i = 0; i < 100; i++) {
+                            post.likeCount += 1;
 
-                        var attempt = {};
+                            var attempt = {};
 
-                        attempt["" + Date.now()] = post;
+                            attempt["" + Date.now()] = post;
 
-                        console.log("attempt", attempt);
+                            console.log("attempt", attempt);
+                        }
+                        
     
                         transaction.update(docRef, post);
 
@@ -142,7 +218,7 @@ export class HomeComponent {
     // set doc
     addLike(key: string) {
 
-
+        var test = {};
         
         return this.db.collection("likes").doc("Test").set(test).then(result => {
             console.log("Document successfully written!", result);

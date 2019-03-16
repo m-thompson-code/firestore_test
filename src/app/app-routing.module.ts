@@ -4,9 +4,9 @@ import { Routes, RouterModule } from '@angular/router';
 import { HomeComponent } from './home';
 
 const routes: Routes = [
-    // { path: 'test2', loadChildren: './routeComponents/test2#Test2Module' },
     { path: '', component: HomeComponent },
-
+    
+    { path: 'counters', loadChildren: './routeModules/counters#CountersModule' }
 ];
 
 @NgModule({
