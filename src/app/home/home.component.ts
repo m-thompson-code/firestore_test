@@ -4,6 +4,10 @@ import { Router } from '@angular/router';
 
 import * as firebase from 'firebase/app';
 
+import * as moment from 'moment';
+
+declare var PromisePool: any;
+
 @Component({
     selector: 'home',
     styleUrls: [ './home.style.scss' ],
@@ -15,11 +19,15 @@ export class HomeComponent {
 
     test: any;
 
+    moment: any;
+
     constructor(private router: Router) {
         this.router = router;
     }
 
     public ngOnInit() {
+        this.moment = moment;
+
         console.log("home");
         console.log(firebase.firestore());
         this.db = firebase.firestore();
@@ -40,6 +48,88 @@ export class HomeComponent {
 
             this.test.push(data);
         }
+    }
+
+    // mockData() {
+    //     var shardCount = 10;
+
+    //     var batch = this.db.batch();
+
+    //     var format = "YYYY-MM-DD";
+
+    //     var mockCounters = this.db.collection("mockCounters").doc(format);
+    //     var metadataCol = mockCounters.collection("metadata");
+        
+    //     var today = moment();
+
+    //     for (var i = 0; i < 180 * 2; i++) {
+    //         var temp = today.clone().subtract(i, 'days');
+
+    //         var metadataDoc = metadataCol.doc(temp.format(format));
+
+    //         batch.set(metadataDoc, {
+    //             shardCount: shardCount
+    //         });
+    //     }
+
+    //     return batch.commit();
+    // }
+
+    mockData2() {
+        const shardCount = 33;
+        const poolSize = 1;
+
+        var format = "YYYY-MM-DD";
+
+        var mockCounters = this.db.collection("mockCounters").doc(format);
+        // var metadataCol = mockCounters.collection("metadata");
+        var shardsCol = mockCounters.collection("shards");
+        
+        var today = moment();
+
+        var promiseFuncs = [];
+
+        for (let i = 0; i < 180 * 2; i++) {
+            let batch = this.db.batch();
+
+            let temp = today.clone().subtract(i, 'days');
+
+            for (let j = 0; j < shardCount; j++) {
+                let metadataDoc = shardsCol.doc(temp.format(format) + "_" + j);
+
+                batch.set(metadataDoc, {
+                    count: 10000,
+                    date: temp.format(format),
+                    format: format,
+                    shardNum: j
+                });
+            }
+
+            promiseFuncs.push(() => {
+                console.log(i, format, temp.format(format));
+                return batch.commit();
+            });
+        }
+
+        // Create a pool
+        const promisePool = new PromisePool(() => {
+            if (!promiseFuncs.length) {
+                return null;
+            }
+
+            let promiseFunc = promiseFuncs.pop();
+
+            return promiseFunc();
+        }, poolSize);
+
+        return promisePool.start();
+    }
+
+    generatedIDTest() {
+        return this.db.collection('cities').add({
+            name: 'Tokyo',
+            country: 'Japan'
+        });
     }
 
     presetBatchTest() {
@@ -94,6 +184,34 @@ export class HomeComponent {
         });
     }
 
+    tranLoopPool(count: number) {
+        var promiseFuncs = [];
+        var poolSize = 1;
+
+        for (var i = 0; i < count; i++) {
+            promiseFuncs.push(() => {
+                this.tran();
+            });
+        }
+
+        // Create a pool
+        const promisePool = new PromisePool(() => {
+            if (!promiseFuncs.length) {
+                return null;
+            }
+
+            let promiseFunc = promiseFuncs.pop();
+
+            return promiseFunc();
+        }, poolSize);
+
+        return promisePool.start().then(() => {
+            console.log("loop pool done", count);
+        }).catch(error => {
+            console.error(error);
+        });
+    }
+
     tranLoop(count: number) {
         var promises = [];
 
@@ -144,34 +262,29 @@ export class HomeComponent {
                 return transaction.get(docRef).then(postSnapshot => {
                     var post = postSnapshot.data();
 
-                    for (var i = 0; i < 100; i++) {
+                    return transaction.get(attemptRef).then(attemptSnapshot => {
+                        post.likeCount += 1;
 
-                    }
-                    // return transaction.get(attemptRef).then(attemptSnapshot => {
-    
-                        for (var i = 0; i < 100; i++) {
-                            post.likeCount += 1;
+                        var attempt = {};
 
-                            var attempt = {};
+                        attempt["" + Date.now()] = post;
 
-                            attempt["" + Date.now()] = post;
-
-                            console.log("attempt", attempt);
-                        }
-                        
+                        console.log("attempt", attempt);
     
                         transaction.update(docRef, post);
 
-                        // if (attemptSnapshot.exists) {
-                            // transaction.update(attemptRef, attempt);
-                        // } else {
-                            // transaction.set(attemptRef, attempt);
-                        // }
+                        if (attemptSnapshot.exists) {
+                            transaction.update(attemptRef, attempt);
+                        } else {
+                            transaction.set(attemptRef, attempt);
+                        }
 
                         return post;
-                    // });
+                    });
                 });
-            })).catch(error => {
+            })).then(post => {
+                console.log("done", post);
+            }).catch(error => {
                 console.error(error);
                 throw error;
             });
