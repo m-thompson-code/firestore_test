@@ -17,12 +17,12 @@ import 'firebase/messaging';
 
 // Firebase web app config
 var firebaseConfig = {
-  apiKey: "AIzaSyAbYLrGKg9l9s3ShrFVwg8PeUxgF-z6Zds",
-  authDomain: "rocket-rounding.firebaseapp.com",
-  databaseURL: "https://rocket-rounding.firebaseio.com",
-  projectId: "rocket-rounding",
-  storageBucket: "rocket-rounding.appspot.com",
-  messagingSenderId: "1024282212718"
+    apiKey: "AIzaSyAbYLrGKg9l9s3ShrFVwg8PeUxgF-z6Zds",
+    authDomain: "rocket-rounding.firebaseapp.com",
+    databaseURL: "https://rocket-rounding.firebaseio.com",
+    projectId: "rocket-rounding",
+    storageBucket: "rocket-rounding.appspot.com",
+    messagingSenderId: "1024282212718"
 };
 
 // Initialize Cloud Firestore through Firebase
@@ -32,16 +32,20 @@ firebase.initializeApp(firebaseConfig);
 
 import { HomeComponent } from './home';
 
+import { PromisePoolService } from './services/promisePool.service';
+
 @NgModule({
-  declarations: [
-    AppComponent,
-    HomeComponent
-  ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule
-  ],
-  providers: [],
-  bootstrap: [AppComponent]
+    declarations: [
+        AppComponent,
+        HomeComponent
+    ],
+    imports: [
+        BrowserModule,
+        AppRoutingModule
+    ],
+    providers: [
+        PromisePoolService
+    ],
+    bootstrap: [AppComponent]
 })
 export class AppModule { }

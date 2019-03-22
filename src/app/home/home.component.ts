@@ -75,8 +75,24 @@ export class HomeComponent {
     //     return batch.commit();
     // }
 
+    getMockData2() {
+        var startDate = '2018-03-24';
+        // var startDate = '2019-02-18';
+        var endDate = '2019-03-19';
+
+        var start = Date.now();
+
+        return this.db.collection("mockCounters").doc("YYYY-MM-DD").collection('shards').orderBy("date").startAt(startDate).endAt(endDate).get().then(colSnapshot => {
+            colSnapshot.forEach(docSnapshot => {
+                // console.log(docSnapshot.data());
+            });
+
+            console.log(Date.now() - start);
+        });
+    }
+
     mockData2() {
-        const shardCount = 33;
+        const shardCount = 10;
         const poolSize = 1;
 
         var format = "YYYY-MM-DD";
@@ -89,6 +105,8 @@ export class HomeComponent {
 
         var promiseFuncs = [];
 
+        var start = Date.now();
+
         for (let i = 0; i < 180 * 2; i++) {
             let batch = this.db.batch();
 
@@ -100,8 +118,8 @@ export class HomeComponent {
                 batch.set(metadataDoc, {
                     count: 10000,
                     date: temp.format(format),
-                    format: format,
-                    shardNum: j
+                    // format: format,
+                    // shardNum: j
                 });
             }
 
@@ -122,7 +140,13 @@ export class HomeComponent {
             return promiseFunc();
         }, poolSize);
 
-        return promisePool.start();
+        return promisePool.start().then(() => {
+            console.log("mockData2 done");
+            console.log(Date.now() - start);
+
+        }).catch(error => {
+            console.error(error);
+        });
     }
 
     generatedIDTest() {
@@ -186,11 +210,11 @@ export class HomeComponent {
 
     tranLoopPool(count: number) {
         var promiseFuncs = [];
-        var poolSize = 1;
+        var poolSize = 4;
 
         for (var i = 0; i < count; i++) {
             promiseFuncs.push(() => {
-                this.tran();
+                return this.tran();
             });
         }
 
@@ -286,7 +310,7 @@ export class HomeComponent {
                 console.log("done", post);
             }).catch(error => {
                 console.error(error);
-                throw error;
+                // throw error;
             });
         }catch(error) {
             console.error(error);
