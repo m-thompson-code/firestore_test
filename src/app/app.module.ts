@@ -33,6 +33,7 @@ firebase.initializeApp(firebaseConfig);
 import { HomeComponent } from './home';
 
 import { PromisePoolService } from './services/promisePool.service';
+import { TransactionService } from './services/transaction.service';
 
 @NgModule({
     declarations: [
@@ -44,7 +45,8 @@ import { PromisePoolService } from './services/promisePool.service';
         AppRoutingModule
     ],
     providers: [
-        PromisePoolService
+        PromisePoolService,
+        TransactionService
     ],
     bootstrap: [AppComponent]
 })

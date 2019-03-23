@@ -1,0 +1,295 @@
+// counters
+system
+- networks
+	_exists//200
+- locations
+	_exists//(200 * 100)
+- categories
+	_exists//(200 * 100 * 100)
+- groups
+	_exists//(200 * 100 * 100)
+- subjects
+	_exists//(200 * 100 * 10,000)
+- users
+	_exists//250,000
+	_viewer
+	_rounder
+	_location_admin
+	_network_admin
+- surveys
+	_exists
+- rounds
+	_exists
+	//_score_sum (?)
+- alerts
+	_exists
+	_active
+	_inProgress
+	_resolved
+	_unresolved
+
+	network
+	- locations
+		_exists//100
+	- categories
+		_exists
+	- groups
+		_exists
+	- subjects
+		_exists//10,000(?)
+	- users
+		_exists//10,000
+	- surveys
+		_exists
+	- rounds
+		_exists
+		_score_sum
+	- alerts
+		_exists
+		_active
+		_inProgress
+		_resolved
+		_unresolved
+
+		location
+		- categories
+			_exists
+		- groups
+			_exists//100
+		- subjects
+			_exists
+		- users
+			_exists
+			_viewer
+			_rounder
+			_location_admin
+			_network_admin
+		- surveys
+			_exists
+		- rounds
+			_exists
+			_score_sum
+		- alerts
+			_exists
+			_active
+			_inProgress
+			_resolved
+			_unresolved
+
+
+			category
+				- users
+					_exists
+				- alerts
+					_exists
+					_active
+					_inProgress
+					_resolved
+					_unresolved
+
+			group
+				- subjects
+					_exists
+				- users
+					_exists
+					_viewer
+					_rounder
+					_location_admin
+					_network_admin
+				- surveys
+					_exists
+				- rounds
+					_exists
+					_score_sum
+				- alerts
+					_exists
+					_active
+					_inProgress
+					_resolved
+					_unresolved
+
+				subject
+					- rounds
+						_exists
+						_score_sum
+					- alerts
+						_exists
+						_active
+						_inProgress
+						_resolved
+						_unresolved
+
+// end counters		
+
+>test
+	test_metadata
+
+		>network_statuses
+			network_status_doc
+				- timestamp: string
+				- status: string
+
+			>location_statuses
+				location_status_doc
+					- timestamp: string
+					- status: string
+
+
+		>light_networks
+			light_network_doc
+
+			>light_locations
+				light_location_doc
+
+
+		>networks
+			network_doc
+
+			>locations
+				location_doc
+
+				>groups
+					group_doc
+
+					>group_counters
+						${time_format}// all, YYYY-MM-DD, YYYY-MM
+							>group_counter_${time_format}_metadatas
+								group_counter_${time_format}_metadata_doc
+									- shardCount: string
+
+							>group_counter_${time_format}_shards
+								group_counter_${time_format}_shard_doc
+									- count: number
+									- date: string
+
+			>location_counters
+				${time_format}// all, YYYY-MM-DD, YYYY-MM
+					>location_counter_${time_format}_metadatas
+						location_counter_${time_format}_metadata_doc
+							- shardCount: string
+
+					>location_counter_${time_format}_shards
+						location_counter_${time_format}_shard_doc
+							- count: number
+							- date: string
+
+			>group_counters
+				${time_format}// all, YYYY-MM-DD, YYYY-MM
+					>group_counter_${time_format}_metadatas
+						group_counter_${time_format}_metadata_doc
+							- shardCount: string
+
+					>group_counter_${time_format}_shards
+						group_counter_${time_format}_shard_doc
+							- count: number
+							- date: string
+
+
+		>archive_networks
+			archive_network_doc
+
+			>archive_locations
+				archive_location_doc
+
+		>metadatas
+			>counter_metadatas
+				networks
+					>counter_metadatas
+						${time_format}
+							- shardCount: number;
+				network_counter_${time_format}_metadata_doc
+					- shardCount: string
+					- max: number
+
+		>network_counters
+			//>network_counter_metadatas
+			//	network_counter_${time_format}_metadata_doc
+			//		- shardCount: number
+			//		- format: string//${time_format}, all, YYYY-MM, YYYY-MM-DD
+
+
+			${time_format}// all, YYYY-MM-DD, YYYY-MM
+				//>network_counter_${time_format}_metadatas
+				>counter_shards
+					${time_str}_${shard_id}
+						- count: number
+						- date: string
+					
+
+				>[date_format_str]
+					network_counter_${time_format}_shard_doc
+						- count: number
+						- date: string
+
+
+		>location_counters
+			${time_format}// all, YYYY-MM-DD, YYYY-MM
+				>location_counter_${time_format}_metadatas
+					location_counter_${time_format}_metadata_doc
+						- shardCount: string
+
+				>location_counter_${time_format}_shards
+					location_counter_${time_format}_shard_doc
+						- count: number
+						- date: string
+
+
+		>group_counters
+				${time_format}// all, YYYY-MM-DD, YYYY-MM
+					>group_counter_${time_format}_metadatas
+						group_counter_${time_format}_metadata_doc
+							- shardCount: string
+
+					>group_counter_${time_format}_shards
+						group_counter_${time_format}_shard_doc
+							- count: number
+							- date: string
+
+				
+
+
+		
+
+--------------------------------------------------------------
+
+		>network_statuses
+			network_status_doc
+				- timestamp: string
+				- status: string
+
+		>network_counters
+			${time_format}// all, YYYY-MM-DD, YYYY-MM
+				>network_counter_${time_format}_metadatas
+					network_counter_${time_format}_metadata_doc
+						- shardCount: string
+
+				>network_counter_${time_format}_shards
+					network_counter_${time_format}_shard_doc
+						- count: number
+						- date: string
+
+		>light_networks
+			light_network_doc
+
+		>networks
+			network_doc
+
+		>networks
+			network_doc
+				>locations
+					location_doc
+						>groups
+							group_doc
+								>subjects
+									subject_doc
+								>question_categorys
+									question_category_doc
+								>survey_templates
+									survey_templates_doc
+								>rounds
+									round_doc
+
+			>users
+				user_metadata
+		>email_to_user_id_map
+			email_to_user_id_metadata

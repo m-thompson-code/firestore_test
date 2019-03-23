@@ -9,6 +9,7 @@ import * as moment from 'moment';
 
 // import { PromisePoolService } from '../../services/promisePool.service';
 import { PromisePoolService } from '@app/services/promisePool.service';
+import { TransactionService } from '@app/services/transaction.service';
 
 @Component({
     selector: 'rr-counters',
@@ -27,7 +28,7 @@ export class CountersComponent {
 
     moment: any;
 
-    constructor(private promisePoolService: PromisePoolService) {
+    constructor(private promisePoolService: PromisePoolService, private transactionService: TransactionService) {
     }
 
     ngOnInit() {
@@ -135,13 +136,179 @@ export class CountersComponent {
         });
     }
 
-    incrementCounter(timeStr?: string) {
+    getID() {
+        const networks_col_ref = this.testDB.collection('networks');
+        const networks_doc_ref = this.testDB.collection('networks').doc();
+
+        const id = networks_doc_ref.id;
+        console.log(id);
+
+        return id;
+    }
+
+    incrementCounter2(networkID: string, timeStr?: string) {
         var momentObj = moment(timeStr || undefined);
 
-        var db = firebase.firestore();//this.db;
+        let writes = [];
 
+        let networkSource = ({
+            title: 'title_' + networkID,
+            otherMetadata: 'otherMetadata_' + networkID + "_" + Date.now(),
+            writeType: 'undefined str',
+            updatedAt: momentObj.valueOf(),
+            createdAt: 1550000000000 || momentObj.valueOf()
+        } as any);
+
+        let lightNetworkSource = {
+            title: networkSource.title,
+            updatedAt: momentObj.valueOf()// TODO: remove this
+        };
+
+        if (!networkID) {
+            console.error("Unexpected missing networkID", networkID);
+            return Promise.resolve(null);
+        }
+
+        var writeType = null;
+
+        const lightNetworkDocRef = this.testDB.collection('light_networks').doc(networkID);
+        const networkDocRef = this.testDB.collection('networks').doc(networkID);
+
+        var gets = [];
+
+        var get = {
+            docRef: lightNetworkDocRef,
+            // onExists: {
+            //     // counters: [
+            //     //     metadataRef
+            //     // ]
+            // },
+            // onNone: {
+
+            // },
+            writes: [
+                {
+                    writeMethod: 'set', 
+                    docRef: lightNetworkDocRef, 
+                    data: lightNetworkSource
+                },
+                {
+                    writeMethod: 'set', 
+                    docRef: networkDocRef, 
+                    data: networkSource
+                }
+            ]
+        };
+
+        gets.push(get);
+
+
+        
+
+        for (let moo = 0; moo < 100; moo++) {
+            const lightNetworkDocRefMoo = this.testDB.collection('light_networks').doc(networkID + "moo" + moo);
+            const networkDocRefMoo = this.testDB.collection('networks').doc(networkID + "moo" + moo);
+            const networkCountersMetadataDocRef = this.testDB.collection('counter_metadatas').doc('networks');
+
+            let getMoos = [];
+
+            // let getMoo = {
+            //     docRef: lightNetworkDocRefMoo,
+            //     counterData: {
+            //         docRef: networkCountersMetadataDocRef,
+            //         metadata: null
+            //     },
+            //     // onExists: {
+            //     //     // counters: [
+            //     //     //     metadataRef
+            //     //     // ]
+            //     // },
+            //     onNone: {
+
+            //     },
+            //     writes: [
+            //         {
+            //             writeMethod: 'set', 
+            //             docRef: lightNetworkDocRefMoo, 
+            //             data: lightNetworkSource
+            //         },
+            //         {
+            //             writeMethod: 'set', 
+            //             docRef: networkDocRefMoo, 
+            //             data: networkSource
+            //         }
+            //     ]
+            // };
+
+            let getMoo = {
+                docRef: lightNetworkDocRefMoo,
+                // onExists: {
+                //     // counters: [
+                //     //     metadataRef
+                //     // ]
+                // },
+                onNone: {
+                    counterTasks: [
+                        {
+                            counterBaseColRef: 'TODO',
+                            counterChangeType: 'inc'
+                        }
+                    ]
+                },
+                writes: [
+                    {
+                        writeMethod: 'set', 
+                        docRef: lightNetworkDocRefMoo, 
+                        data: lightNetworkSource
+                    },
+                    {
+                        writeMethod: 'set', 
+                        docRef: networkDocRefMoo, 
+                        data: networkSource
+                    }
+                ]
+            };
+
+            getMoos.push(getMoo);
+        }
+
+        this.transactionService.runTransaction(getMoos).then(() => {
+            console.log("did it", moo);
+        }).catch(error => {
+            console.error(error);
+            throw error;
+        });
+        
+        // return this.transactionService.runTransaction(gets).then(() => {
+        //     console.log("did it");
+        // }).catch(error => {
+        //     console.error(error);
+        //     throw error;
+        // });
+
+            // return t.get(lightNetworkDocRef).then(lightNetworkDocSnapshot => {
+            //     if (lightNetworkDocSnapshot.exists) {
+            //         const oldLightNetworkDoc = lightNetworkDocSnapshot.data();
+
+            //         writeType = 'update';
+
+            //         console.log("update");
+
+            //         networkSource.writeType = 'update';
+
+            //     } else {
+            //         writeType = 'add';
+
+            //         console.log("add");
+
+            //         networkSource.writeType = 'add';
+            //     }
+
+            // });
+
+        /*
         let shard_metadatas = {
-            'system': null
+            'system': undefined
         };
 
         let timeData = {
@@ -150,10 +317,12 @@ export class CountersComponent {
                 str: 'all'
             },
             'YYYY-MM-DD': {
-                format: 'YYYY-MM-DD'
+                format: 'YYYY-MM-DD',
+                str: undefined
             },
             'YYYY-MM': {
-                format: 'YYYY-MM'
+                format: 'YYYY-MM',
+                str: undefined
             }
         }
 
@@ -162,9 +331,9 @@ export class CountersComponent {
 
         let errors = [];
 
-        let promiseFuncs = [];
+        let counterMetadataPromiseFuncs = [];
 
-        let promiseFunc = (() => {
+        let counterMetadataPromiseFunc = (() => {
             if (errors.length) {
                 console.warn("Exit early since there are errors");
                 return Promise.resolve(null);
@@ -187,17 +356,20 @@ export class CountersComponent {
             });
         });
 
-        promiseFuncs.push(promiseFunc);
+        counterMetadataPromiseFuncs.push(counterMetadataPromiseFunc);
         
         // get shard metadatas
-        return this.promisePoolService.doPromiseFuncPool(promiseFuncs, 8).then(() => {
+        return this.promisePoolService.doPromiseFuncPool(counterMetadataPromiseFuncs, 8).then(() => {
             console.log(shard_metadatas);
 
             // TODO: Validate request based off of max(s)
             return db.runTransaction(t => {
-                let writes = [];
+                let setPromiseFuncs = [];
 
-                let tPromiseFuncs = [];
+                const shard_col_ref = this.testDB.collection('network_counters').doc(timeFormat).collection('counter_shards');
+                const shard_doc_ref = shard_col_ref.doc(`${timeStr}_${shard_id}`);
+
+                let counterPromiseFuncs = [];
 
                 for (let format of Object.keys(timeData || {})) {
                     const timeFormat = timeData[format]['format'];
@@ -208,7 +380,7 @@ export class CountersComponent {
                     const shard_col_ref = this.testDB.collection('network_counters').doc(timeFormat).collection('counter_shards');
                     const shard_doc_ref = shard_col_ref.doc(`${timeStr}_${shard_id}`);
 
-                    let tPromiseFunc = (() => {
+                    let counterPromiseFunc = (() => {
                         return t.get(shard_doc_ref).then(shardDocSnapshot => {
                             const oldCount = shardDocSnapshot.exists && shardDocSnapshot.data().count || 0;
 
@@ -223,10 +395,10 @@ export class CountersComponent {
                         });
                     }).bind(this);
 
-                    tPromiseFuncs.push(tPromiseFunc);
+                    counterPromiseFuncs.push(counterPromiseFunc);
                 }
 
-                return this.promisePoolService.doPromiseFuncPool(tPromiseFuncs, 8).then(() => {
+                return this.promisePoolService.doPromiseFuncPool(counterPromiseFuncs, 8).then(() => {
                     console.log(writes);
 
                     for (let i = 0; i < writes.length; i++) {
@@ -235,12 +407,6 @@ export class CountersComponent {
                         }
                     }
                 });
-
-                // for (let i = 0; i < writes.length; i++) {
-                //     if (writes[i].writeType === 'set') {
-                //         t.set(writes[i].docRef, writes[i].docObj);
-                //     }
-                // }
             });
             
 
@@ -283,7 +449,249 @@ export class CountersComponent {
         //         // t.update(shard_ref, { count: new_count });
         //         return 'moo';
         //     });
-        // });
+        // });*/
+    }
+
+    checkStuff() {
+        var lightNetworks = 0;
+        var networkCounter = 0;
+
+        this.testDB.collection('light_networks').get().then(colSnapshot => {
+            colSnapshot.forEach(docSnapshot => {
+                lightNetworks += 1;
+            });
+
+            console.log(lightNetworks);
+        });
+        this.testDB.collection('network_counters').doc('all').collection('counter_shards').get().then(colSnapshot => {
+            colSnapshot.forEach(docSnapshot => {
+                networkCounter += docSnapshot.data().count;
+            });
+
+            console.log(networkCounter);
+        });
+    }
+
+    incrementCounter(networkID: string, timeStr?: string) {
+        var momentObj = moment(timeStr || undefined);
+
+        let writes = [];
+
+        var db = firebase.firestore();//this.db;
+
+        let networkSource = ({
+            title: 'title_' + networkID,
+            otherMetadata: 'otherMetadata_' + networkID + "_" + Date.now(),
+            writeType: 'undefined str',
+            updatedAt: momentObj.valueOf(),
+            createdAt: 1550000000000 || momentObj.valueOf()
+        } as any);
+
+        let lightNetworkSource = {
+            title: networkSource.title,
+            updatedAt: momentObj.valueOf()// TODO: remove this
+        };
+
+        if (!networkID) {
+            console.error("Unexpected missing networkID", networkID);
+            return Promise.resolve(null);
+        }
+
+        var writeType = null;
+
+        const lightNetworkDocRef = this.testDB.collection('light_networks').doc(networkID);
+        const networkDocRef = this.testDB.collection('networks').doc(networkID);
+
+        return db.runTransaction(t => {
+            return t.get(lightNetworkDocRef).then(lightNetworkDocSnapshot => {
+                if (lightNetworkDocSnapshot.exists) {
+                    const oldLightNetworkDoc = lightNetworkDocSnapshot.data();
+
+                    writeType = 'update';
+
+                    console.log("update");
+
+                    networkSource.writeType = 'update';
+
+                    writes.push({
+                        writeType: 'set', 
+                        docRef: lightNetworkDocRef, 
+                        docObj: lightNetworkSource
+                    });
+                } else {
+                    writeType = 'add';
+
+                    console.log("add");
+
+                    networkSource.writeType = 'add';
+
+                    writes.push({
+                        writeType: 'set', 
+                        docRef: lightNetworkDocRef, 
+                        docObj: lightNetworkSource
+                    });
+                }
+
+                writes.push({
+                    writeType: 'set', 
+                    docRef: networkDocRef, 
+                    docObj: networkSource
+                });
+
+                for (let i = 0; i < writes.length; i++) {
+                    if (writes[i].writeType === 'set') {
+                        t.set(writes[i].docRef, writes[i].docObj);
+                    } else {
+                        console.error(`unexpected writeType ${writes[i].writeType}`);
+                        throw {message: `unexpected writeType ${writes[i].writeType}`};
+                    }
+                }
+            });
+        });
+        /*
+        let shard_metadatas = {
+            'system': undefined
+        };
+
+        let timeData = {
+            'all': {
+                format: 'all',
+                str: 'all'
+            },
+            'YYYY-MM-DD': {
+                format: 'YYYY-MM-DD',
+                str: undefined
+            },
+            'YYYY-MM': {
+                format: 'YYYY-MM',
+                str: undefined
+            }
+        }
+
+        timeData['YYYY-MM-DD'].str = momentObj.format('YYYY-MM-DD');
+        timeData['YYYY-MM'].str = momentObj.format('YYYY-MM');
+
+        let errors = [];
+
+        let counterMetadataPromiseFuncs = [];
+
+        let counterMetadataPromiseFunc = (() => {
+            if (errors.length) {
+                console.warn("Exit early since there are errors");
+                return Promise.resolve(null);
+            }
+
+            return this.testDB.collection('counter_metadatas').doc('networks').get().then(metadatasDocSnapshot => {
+                if (metadatasDocSnapshot.exists) {
+                    shard_metadatas['system'] = metadatasDocSnapshot.data();
+                } else {
+                    console.error("Unexpected missing metadata");
+                    shard_metadatas['system'] = null;
+
+                    errors.push({message: "Unexpected missing metadata", data: {}});
+                }
+                
+            }).catch(error => {
+                console.error(error);
+                errors.push(error);
+                throw error;
+            });
+        });
+
+        counterMetadataPromiseFuncs.push(counterMetadataPromiseFunc);
+        
+        // get shard metadatas
+        return this.promisePoolService.doPromiseFuncPool(counterMetadataPromiseFuncs, 8).then(() => {
+            console.log(shard_metadatas);
+
+            // TODO: Validate request based off of max(s)
+            return db.runTransaction(t => {
+                let setPromiseFuncs = [];
+
+                const shard_col_ref = this.testDB.collection('network_counters').doc(timeFormat).collection('counter_shards');
+                const shard_doc_ref = shard_col_ref.doc(`${timeStr}_${shard_id}`);
+
+                let counterPromiseFuncs = [];
+
+                for (let format of Object.keys(timeData || {})) {
+                    const timeFormat = timeData[format]['format'];
+                    const timeStr = timeData[format]['str'];
+
+                    // Select a shard of the counter at random
+                    const shard_id = "" + Math.floor(Math.random() * shard_metadatas['system']['shardCount']);
+                    const shard_col_ref = this.testDB.collection('network_counters').doc(timeFormat).collection('counter_shards');
+                    const shard_doc_ref = shard_col_ref.doc(`${timeStr}_${shard_id}`);
+
+                    let counterPromiseFunc = (() => {
+                        return t.get(shard_doc_ref).then(shardDocSnapshot => {
+                            const oldCount = shardDocSnapshot.exists && shardDocSnapshot.data().count || 0;
+
+                            writes.push({
+                                writeType: 'set', 
+                                docRef: shard_doc_ref, 
+                                docObj: {
+                                    count: oldCount + 1,
+                                    timeStr: timeStr
+                                }
+                            });
+                        });
+                    }).bind(this);
+
+                    counterPromiseFuncs.push(counterPromiseFunc);
+                }
+
+                return this.promisePoolService.doPromiseFuncPool(counterPromiseFuncs, 8).then(() => {
+                    console.log(writes);
+
+                    for (let i = 0; i < writes.length; i++) {
+                        if (writes[i].writeType === 'set') {
+                            t.set(writes[i].docRef, writes[i].docObj);
+                        }
+                    }
+                });
+            });
+            
+
+            // // Select a shard of the counter at random
+            // const shard_id = Math.floor(Math.random() * shard_metadatas['system']['shardCount']).toString();
+            // const shard_col_ref = this.testDB.collection('network_counters').doc();
+            // const shard_doc_ref = shard_col_ref.doc(shard_id);
+
+            // // Update count in a transaction
+            // return db.runTransaction(t => {
+            //     return t.get(shard_doc_ref).then(collectionSnapshot => {
+            //         collectionSnapshot.forEach(docSnapshot => {
+            //             console.log(docSnapshot.data());
+            //         });
+
+            //         // const old_count = doc.exists && doc.data().count || 0;
+
+            //         // const new_count = old_count + 1;
+            //         // t.update(shard_ref, { count: new_count });
+            //         return 'moo';
+            //     });
+            // });
+        });
+
+        // // Select a shard of the counter at random
+        // const shard_id = Math.floor(Math.random() * shard_metadatas['system']['shardCount']).toString();
+        // const shard_col_ref = this.testDB.collection('network_counters').doc()
+        // const shard_doc_ref = shard_col_ref.doc(shard_id);
+
+        // // Update count in a transaction
+        // return db.runTransaction(t => {
+        //     return t.get(shard_doc_ref).then(collectionSnapshot => {
+        //         collectionSnapshot.forEach(docSnapshot => {
+        //             console.log(docSnapshot.data());
+        //         });
+
+        //         // const old_count = doc.exists && doc.data().count || 0;
+
+        //         // const new_count = old_count + 1;
+        //         // t.update(shard_ref, { count: new_count });
+        //         return 'moo';
+        //     });
+        // });*/
     }
 
     // getCountSum(colSnapshot: firebase.firestore.QuerySnapshot) {
