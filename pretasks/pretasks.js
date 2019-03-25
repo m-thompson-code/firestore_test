@@ -9,7 +9,7 @@ const handleSvgFileArray = require('./handleSvgFileArray/handleSvgFileArray');
 
 // directors should be from the root of project <root>/src/app/assets/*, etc
 const svgInputDirsFromRoot = [
-    "./pretasks/handleSvgFileArray/test",
+    // "./pretasks/handleSvgFileArray/test",
     "./src/assets/svg"
 ];
 

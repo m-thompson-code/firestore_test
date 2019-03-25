@@ -8,8 +8,7 @@ import * as moment from 'moment';
 
 declare var PromisePool: any;
 
-import * as svg_files from '@app/svg_files.json';
-// import * as svgFilesModule from '@app/svgFilesModule';
+import svg_files from '@app/svg_files.json';
 
 @Component({
     selector: 'home',
@@ -30,6 +29,9 @@ export class HomeComponent {
 
     public ngOnInit() {
         console.log(svg_files);
+        // for (var i = 0; i < svg_files.default.length; i++) {
+        //     console.log(svg_files.default[i]);
+        // }
 
         this.moment = moment;
 
