@@ -203,14 +203,13 @@ export class CountersComponent {
         gets.push(get);
 
 
-        
+        let getMoos = [];
 
         for (let moo = 0; moo < 100; moo++) {
             const lightNetworkDocRefMoo = this.testDB.collection('light_networks').doc(networkID + "moo" + moo);
             const networkDocRefMoo = this.testDB.collection('networks').doc(networkID + "moo" + moo);
             const networkCountersMetadataDocRef = this.testDB.collection('counter_metadatas').doc('networks');
 
-            let getMoos = [];
 
             // let getMoo = {
             //     docRef: lightNetworkDocRefMoo,
@@ -273,7 +272,7 @@ export class CountersComponent {
         }
 
         this.transactionService.runTransaction(getMoos).then(() => {
-            console.log("did it", moo);
+            console.log("did it");
         }).catch(error => {
             console.error(error);
             throw error;

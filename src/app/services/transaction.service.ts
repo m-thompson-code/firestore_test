@@ -88,7 +88,7 @@ export class TransactionService {
                                     for (let k = 0; k < get.onExists.counterTasks.length; k++) {
                                         const baseColRef = this.testDB.collection('network_counters');
                                         // handle if inc/dec etc
-                                        let counterStuff = this.getIncCounterStuff(t, writes, null, baseColRef);
+                                        let counterStuff = this.getIncCounterStuff(t, writes, baseColRef, null);
 
                                         for (let l = 0; l < counterStuff.length; l++) {
                                             counterGetPromiseFuncs.push(counterStuff[l]);
@@ -105,7 +105,7 @@ export class TransactionService {
                                     for (let k = 0; k < get.onNone.counterTasks.length; k++) {
                                         const baseColRef = this.testDB.collection('network_counters');
                                         // handle if inc/dec etc
-                                        let counterStuff = this.getIncCounterStuff(t, writes, null, baseColRef);
+                                        let counterStuff = this.getIncCounterStuff(t, writes, baseColRef, null);
                                         console.log(counterStuff);
                                         for (let l = 0; l < counterStuff.length; l++) {
                                             counterGetPromiseFuncs.push(counterStuff[l]);
@@ -139,7 +139,17 @@ export class TransactionService {
         });
     }
 
-    getIncCounterStuff(t, writes, timeStr?: string, baseColRef) {
+    getIncCounterStuff(t: firebase.firestore.Transaction, writes: any[], baseColRef: firebase.firestore.CollectionReference, timeStr: string) {
+        if (!t) {
+            console.error("Unexpected missing transaction");
+            return;
+        }
+
+        if (!writes) {
+            console.error("Unexpected missing writes");
+            return;
+        }
+
         let counterPromiseFuncs = [];
 
         var momentObj = moment(timeStr || undefined);
