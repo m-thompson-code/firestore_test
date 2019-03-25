@@ -11,7 +11,7 @@ const error_color = '\x1b[31m%s\x1b[0m';// red
 const success_color = '\x1b[32m%s\x1b[0m';// green
 const warning_color =  '\x1b[33m%s\x1b[0m';// yellow
 
-function handleDirs(inputPathsFromRoot, outputPathsFromRoot) {
+function handleDirs(inputPathsFromRoot, outputPathsFromRoot, outputSvgFilesFileName) {
 	if (!inputPathsFromRoot || !inputPathsFromRoot.length) {
 		console.log("Skipped generating svg files array");
 		return;
@@ -28,11 +28,11 @@ function handleDirs(inputPathsFromRoot, outputPathsFromRoot) {
 		handleDir(inputPathsFromRoot[i], svgFilesArray);
 	}
 
-	console.log(svgFilesArray);
-
 	for (var i = 0; i < outputPathsFromRoot.length; i++) {
-		var outputPath = path.join(helpers.root(outputPathsFromRoot[i]), ROOT);
+		var outputPath = path.join(helpers.root(outputPathsFromRoot[i]), outputSvgFilesFileName || 'svg_files.json');
+
 		fs.writeFileSync(outputPath, JSON.stringify(svgFilesArray));
+		console.log("Wrote svg files array:", outputPath);
 	}
 
 	console.log("Completed generating svg files array");
@@ -41,9 +41,7 @@ function handleDirs(inputPathsFromRoot, outputPathsFromRoot) {
 }
 
 function handleDir(pathFromRoot, svgFilesArray) {
-	console.log('handleDir', pathFromRoot, svgFilesArray);
 	var normalizedPath = helpers.root(pathFromRoot);
-	console.log(normalizedPath);
 
 	console.log(normalizedPath,"- Preparing svg files array");
 
